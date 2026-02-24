@@ -1,0 +1,205 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | ENUMS
+ * |--------------------------------------------------------------------------
+ */
+
+enum WorkspaceRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum AccountType {
+  CASH
+  BANK
+  EWALLET
+  SAVING
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | MODELS
+ * |--------------------------------------------------------------------------
+ */
+
+model User {
+  id       String @id @default(uuid()) @db.Uuid
+  name     String @db.VarChar(150)
+  email    String @unique @db.VarChar(150)
+  password String @db.VarChar(255)
+
+  workspaceMembers WorkspaceMember[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("users")
+}
+
+model Workspace {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @db.VarChar(150)
+  description String?
+
+  members      WorkspaceMember[]
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+  savingGoals  SavingGoal[]
+  budgets      Budget[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String        @id @default(uuid()) @db.Uuid
+  workspaceId String        @db.Uuid
+  userId      String        @db.Uuid
+  role        WorkspaceRole
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+model Account {
+  id          String      @id @default(uuid()) @db.Uuid
+  workspaceId String      @db.Uuid
+  name        String      @db.VarChar(150)
+  type        AccountType
+  currency    String      @default("IDR") @db.VarChar(10)
+  balance     Decimal     @default(0) @db.Decimal(18, 2)
+  isActive    Boolean     @default(true)
+
+  workspace         Workspace     @relation(fields: [workspaceId], references: [id])
+  transactions      Transaction[] @relation("FromAccount")
+  receivedTransfers Transaction[] @relation("ToAccount")
+  savingGoals       SavingGoal[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("accounts")
+}
+
+model Category {
+  id          String       @id @default(uuid()) @db.Uuid
+  workspaceId String       @db.Uuid
+  name        String       @db.VarChar(150)
+  type        CategoryType
+  icon        String?      @db.VarChar(100)
+  color       String?      @db.VarChar(50)
+  isActive    Boolean      @default(true)
+
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
+  transactions Transaction[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  budgets   Budget[]
+
+  @@index([workspaceId, name])
+  @@map("categories")
+}
+
+model Transaction {
+  id              String          @id @default(uuid()) @db.Uuid
+  workspaceId     String          @db.Uuid
+  type            TransactionType
+  accountId       String          @db.Uuid
+  toAccountId     String?         @db.Uuid
+  categoryId      String?         @db.Uuid
+  amount          Decimal         @db.Decimal(18, 2)
+  description     String?
+  transactionDate DateTime
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  account   Account   @relation("FromAccount", fields: [accountId], references: [id])
+  toAccount Account?  @relation("ToAccount", fields: [toAccountId], references: [id])
+  category  Category? @relation(fields: [categoryId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([workspaceId, transactionDate])
+  @@index([accountId])
+  @@map("transactions")
+}
+
+model SavingGoal {
+  id            String    @id @default(uuid()) @db.Uuid
+  workspaceId   String    @db.Uuid
+  accountId     String    @db.Uuid
+  name          String    @db.VarChar(150)
+  targetAmount  Decimal   @db.Decimal(18, 2)
+  currentAmount Decimal   @default(0) @db.Decimal(18, 2)
+  deadline      DateTime?
+  isCompleted   Boolean   @default(false)
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  account   Account   @relation(fields: [accountId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("saving_goals")
+}
+
+model Budget {
+  id          String  @id @default(uuid()) @db.Uuid
+  workspaceId String  @db.Uuid
+  categoryId  String  @db.Uuid
+  month       Int
+  year        Int
+  amount      Decimal @db.Decimal(18, 2)
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  category  Category  @relation(fields: [categoryId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([workspaceId, categoryId, month, year])
+  @@map("budgets")
+}
