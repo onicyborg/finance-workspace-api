@@ -1,22 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { Controller, Get } from '@nestjs/common';
+import { PrismaService } from './prisma/prisma.service';
 
-describe('AppController', () => {
-  let appController: AppController;
+@Controller()
+export class AppController {
+  constructor(private prisma: PrismaService) {}
 
-  beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
-      providers: [AppService],
-    }).compile();
-
-    appController = app.get<AppController>(AppController);
-  });
-
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
-    });
-  });
-});
+  @Get('health')
+  async health() {
+    await this.prisma.$queryRaw`SELECT 1`;
+    return { status: 'ok' };
+  }
+}
