@@ -65,6 +65,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Logout from all devices' })
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post('logout-all')
   logoutAll(@Req() req: any) {
@@ -72,6 +73,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Get current user' })
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Get('me')
   me(@Req() req: any) {
