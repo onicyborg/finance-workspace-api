@@ -42,6 +42,12 @@ enum TransactionType {
   TRANSFER
 }
 
+enum VerificationTokenType {
+  EMAIL_VERIFICATION
+  PHONE_VERIFICATION
+  PASSWORD_RESET
+}
+
 /**
  * |--------------------------------------------------------------------------
  * | MODELS
@@ -51,16 +57,54 @@ enum TransactionType {
 model User {
   id       String @id @default(uuid()) @db.Uuid
   name     String @db.VarChar(150)
+  username String @unique @db.VarChar(50)
   email    String @unique @db.VarChar(150)
+  phoneNumber     String?   @unique @db.VarChar(20)
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
   password String @db.VarChar(255)
 
   workspaceMembers WorkspaceMember[]
+  sessions         UserSession[]
+  verificationTokens VerificationToken[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   @@map("users")
+}
+
+model UserSession {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @db.Uuid
+  refreshTokenHash String
+  expiresAt        DateTime
+  ipAddress        String?
+  userAgent        String?
+  revokedAt        DateTime?
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_sessions")
+}
+
+model VerificationToken {
+  id        String                @id @default(uuid()) @db.Uuid
+  userId    String                @db.Uuid
+  type      VerificationTokenType
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime              @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@map("verification_tokens")
 }
 
 model Workspace {

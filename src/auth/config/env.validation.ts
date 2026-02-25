@@ -16,5 +16,13 @@ export const envValidationSchema = Joi.object({
     )
     .required(),
 
+  JWT_REFRESH_EXPIRES_IN: Joi.alternatives()
+    .try(
+      Joi.number(),
+      Joi.string().pattern(/^\d+[smhd]$/) // contoh: 7d
+    )
+    .default('7d')
+    .optional(),
+
   BCRYPT_SALT_ROUNDS: Joi.number().min(8).max(15).default(10),
 });
