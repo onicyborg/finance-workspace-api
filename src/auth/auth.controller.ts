@@ -5,6 +5,8 @@ import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RefreshDto } from './dto/refresh.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { ConfirmEmailDto } from './dto/confirm-email.dto';
+import { ResendEmailDto } from './dto/resend-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -13,6 +15,16 @@ export class AuthController {
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  @Post('email-verify/confirm')
+  confirmEmail(@Body() dto: ConfirmEmailDto) {
+    return this.authService.confirmEmail(dto.token);
+  }
+
+  @Post('email-verify/request')
+  resendVerification(@Body() dto: ResendEmailDto) {
+    return this.authService.resendEmailVerification(dto.email);
   }
 
   @Post('login')

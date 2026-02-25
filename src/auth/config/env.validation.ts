@@ -12,17 +12,23 @@ export const envValidationSchema = Joi.object({
   JWT_EXPIRES_IN: Joi.alternatives()
     .try(
       Joi.number(),
-      Joi.string().pattern(/^\d+[smhd]$/) // contoh: 1d, 7h, 30m
+      Joi.string().pattern(/^\d+[smhd]$/), // contoh: 1d, 7h, 30m
     )
     .required(),
 
   JWT_REFRESH_EXPIRES_IN: Joi.alternatives()
     .try(
       Joi.number(),
-      Joi.string().pattern(/^\d+[smhd]$/) // contoh: 7d
+      Joi.string().pattern(/^\d+[smhd]$/), // contoh: 7d
     )
     .default('7d')
     .optional(),
 
   BCRYPT_SALT_ROUNDS: Joi.number().min(8).max(15).default(10),
+
+  SMTP_HOST: Joi.string().required(),
+  SMTP_PORT: Joi.number().required(),
+  SMTP_USER: Joi.string().required(),
+  SMTP_PASS: Joi.string().required(),
+  SMTP_FROM: Joi.string().required(),
 });
