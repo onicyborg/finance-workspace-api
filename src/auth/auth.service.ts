@@ -318,6 +318,195 @@ export class AuthService {
     };
   }
 
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    const genericResponse = {
+      message: 'If the email exists, a password reset link has been sent.',
+    };
+
+    if (!user) {
+      return genericResponse;
+    }
+
+    // delete old unused reset tokens
+    await this.prisma.verificationToken.deleteMany({
+      where: {
+        userId: user.id,
+        type: 'PASSWORD_RESET',
+        usedAt: null,
+      },
+    });
+
+    const rawToken = this.generateToken();
+    const tokenHash = this.sha256Hex(rawToken);
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    await this.prisma.verificationToken.create({
+      data: {
+        userId: user.id,
+        type: 'PASSWORD_RESET',
+        tokenHash,
+        expiresAt,
+      },
+    });
+
+    // TODO: Replace with real email template
+    const resetUrl = `http://localhost:3000/auth/reset-password?token=${rawToken}`;
+
+    await this.mailService.sendMail(
+      user.email,
+      'Reset Your Password',
+      `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Password Reset</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background:#111827;padding:20px;text-align:center;">
+              <h1 style="color:#ffffff;margin:0;font-size:20px;">
+                Finance Workspace
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px 30px;color:#374151;">
+              <h2 style="margin-top:0;font-size:22px;color:#111827;">
+                Reset Your Password
+              </h2>
+
+              <p style="font-size:15px;line-height:1.6;margin-bottom:20px;">
+                We received a request to reset your password. Click the button below to set a new password.
+              </p>
+
+              <!-- Button -->
+              <div style="text-align:center;margin:30px 0;">
+                <a href="${resetUrl}" 
+                   style="
+                     background:#dc2626;
+                     color:#ffffff;
+                     padding:14px 28px;
+                     text-decoration:none;
+                     border-radius:6px;
+                     display:inline-block;
+                     font-weight:bold;
+                     font-size:14px;">
+                  Reset Password
+                </a>
+              </div>
+
+              <p style="font-size:13px;color:#6b7280;">
+                This reset link will expire in <strong>30 minutes</strong>.
+              </p>
+
+              <p style="font-size:13px;color:#6b7280;margin-top:20px;">
+                If you did not request a password reset, you can safely ignore this email.
+              </p>
+
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:30px 0;" />
+
+              <p style="font-size:12px;color:#9ca3af;word-break:break-all;">
+                If the button above doesn't work, copy and paste this link into your browser:
+                <br />
+                <a href="${resetUrl}" style="color:#dc2626;">${resetUrl}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f9fafb;padding:20px;text-align:center;font-size:12px;color:#9ca3af;">
+              © ${new Date().getFullYear()} Finance Workspace. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`,
+    );
+
+    return genericResponse;
+  }
+
+  async resetPassword(rawToken: string, newPassword: string) {
+    const tokenHash = this.sha256Hex(rawToken);
+
+    const record = await this.prisma.verificationToken.findFirst({
+      where: {
+        tokenHash,
+        type: 'PASSWORD_RESET',
+        usedAt: null,
+      },
+    });
+
+    if (!record) {
+      throw new BadRequestException('Invalid reset token');
+    }
+
+    if (record.expiresAt < new Date()) {
+      throw new BadRequestException('Reset token expired');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: record.userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const saltRounds =
+      this.configService.get<number>('BCRYPT_SALT_ROUNDS') ?? 10;
+
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    await this.prisma.$transaction([
+      // update password
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      }),
+
+      // mark token used
+      this.prisma.verificationToken.update({
+        where: { id: record.id },
+        data: { usedAt: new Date() },
+      }),
+
+      // revoke all sessions
+      this.prisma.userSession.updateMany({
+        where: {
+          userId: user.id,
+          revokedAt: null,
+        },
+        data: {
+          revokedAt: new Date(),
+        },
+      }),
+    ]);
+
+    return {
+      message: 'Password has been reset successfully.',
+    };
+  }
+
   async refresh(refreshToken: string, req?: any) {
     let payload: RefreshTokenPayload;
     try {
