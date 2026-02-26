@@ -16,22 +16,24 @@ export class ResponseInterceptor implements NestInterceptor {
         const response = http.getResponse();
         const statusCode = response?.statusCode;
 
-        if (data && typeof data === 'object' && !Array.isArray(data)) {
-          if ('statusCode' in data) {
-            return {
-              ...data,
-              statusCode: (data as any).statusCode ?? statusCode,
-            };
-          }
-
+        if (
+          data &&
+          typeof data === 'object' &&
+          !Array.isArray(data) &&
+          'statusCode' in data &&
+          'status' in data &&
+          'data' in data
+        ) {
           return {
-            statusCode,
-            ...data,
+            statusCode: (data as any).statusCode ?? statusCode,
+            status: (data as any).status ?? 'success',
+            data: (data as any).data,
           };
         }
 
         return {
           statusCode,
+          status: 'success',
           data,
         };
       }),
