@@ -110,4 +110,77 @@ export class MailService {
 
     await this.sendMail(to, 'Verify Your Email', html);
   }
+
+  async sendWorkspaceInvitationEmail(
+    to: string,
+    inviterName: string,
+    workspaceName: string,
+    role: string,
+    expiresAt: Date,
+  ) {
+    const loginUrl = 'http://localhost:3000/login';
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+          
+          <tr>
+            <td style="background:#111827;padding:20px;text-align:center;">
+              <h1 style="color:#ffffff;margin:0;font-size:20px;">
+                Finance Workspace
+              </h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:40px 30px;color:#374151;">
+              <h2 style="margin-top:0;color:#111827;">
+                Workspace Invitation
+              </h2>
+
+              <p>
+                <strong>${inviterName}</strong> has invited you to join:
+              </p>
+
+              <p style="font-size:18px;font-weight:bold;color:#2563eb;">
+                ${workspaceName}
+              </p>
+
+              <p>
+                Your role will be: <strong>${role}</strong>
+              </p>
+
+              <p>
+                This invitation expires on:
+                <strong>${expiresAt.toLocaleString()}</strong>
+              </p>
+
+              <div style="text-align:center;margin:30px 0;">
+                <a href="${loginUrl}"
+                   style="background:#2563eb;color:#ffffff;padding:14px 28px;text-decoration:none;border-radius:6px;font-weight:bold;">
+                  View Invitation
+                </a>
+              </div>
+
+              <p style="font-size:12px;color:#9ca3af;">
+                After logging in, go to your Invitations page to accept or reject.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+    await this.sendMail(to, `You're invited to join ${workspaceName}`, html);
+  }
 }

@@ -1,12 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
+import { InviteUserDto } from './dto/invite-user.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class WorkspaceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mailService: MailService,
+  ) {}
 
   // WORKSPACE
 
@@ -82,6 +91,184 @@ export class WorkspaceService {
     });
   }
 
+  async inviteUser(
+    workspaceId: string,
+    inviterUserId: string,
+    dto: InviteUserDto,
+  ) {
+    // Cari user by username/email
+    const targetUser = dto.usernameOrEmail.includes('@')
+      ? await this.prisma.user.findUnique({
+          where: { email: dto.usernameOrEmail },
+        })
+      : await this.prisma.user.findUnique({
+          where: { username: dto.usernameOrEmail },
+        });
+
+    if (!targetUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (targetUser.id === inviterUserId) {
+      throw new BadRequestException('You cannot invite yourself');
+    }
+
+    // Cek sudah member?
+    const existingMember = await this.prisma.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: {
+          workspaceId,
+          userId: targetUser.id,
+        },
+      },
+    });
+
+    if (existingMember) {
+      throw new BadRequestException('User is already a member');
+    }
+
+    // Cek sudah ada invitation pending?
+    const existingInvitation = await this.prisma.workspaceInvitation.findUnique(
+      {
+        where: {
+          workspaceId_inviteeUserId: {
+            workspaceId,
+            inviteeUserId: targetUser.id,
+          },
+        },
+      },
+    );
+
+    if (existingInvitation && existingInvitation.status === 'PENDING') {
+      throw new BadRequestException('Invitation already sent');
+    }
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 3);
+
+    const invitation = await this.prisma.workspaceInvitation.create({
+      data: {
+        workspaceId,
+        inviterUserId,
+        inviteeUserId: targetUser.id,
+        role: dto.role,
+        expiresAt,
+      },
+    });
+
+    const workspace = await this.prisma.workspace.findUnique({
+      where: { id: workspaceId },
+    });
+
+    const inviter = await this.prisma.user.findUnique({
+      where: { id: inviterUserId },
+    });
+
+    this.mailService
+      .sendWorkspaceInvitationEmail(
+        targetUser.email,
+        inviter?.name ?? 'Someone',
+        workspace?.name ?? 'Finance Workspace',
+        dto.role,
+        expiresAt,
+      )
+      .catch((err) => {
+        console.error('Failed to send invitation email:', err);
+      });
+
+    return invitation;
+  }
+
+  async getMyInvitations(userId: string) {
+    return this.prisma.workspaceInvitation.findMany({
+      where: {
+        inviteeUserId: userId,
+        status: 'PENDING',
+      },
+      include: {
+        workspace: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        inviter: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async acceptInvitation(invitationId: string, userId: string) {
+    const invitation = await this.prisma.workspaceInvitation.findUnique({
+      where: { id: invitationId },
+    });
+
+    if (!invitation || invitation.inviteeUserId !== userId) {
+      throw new NotFoundException('Invitation not found');
+    }
+
+    if (invitation.status !== 'PENDING') {
+      throw new BadRequestException('Invitation is no longer valid');
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      await this.prisma.workspaceInvitation.update({
+        where: { id: invitationId },
+        data: { status: 'EXPIRED' },
+      });
+      throw new BadRequestException('Invitation has expired');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.workspaceMember.create({
+        data: {
+          workspaceId: invitation.workspaceId,
+          userId,
+          role: invitation.role,
+        },
+      }),
+      this.prisma.workspaceInvitation.update({
+        where: { id: invitationId },
+        data: {
+          status: 'ACCEPTED',
+          respondedAt: new Date(),
+        },
+      }),
+    ]);
+
+    return { message: 'Invitation accepted successfully' };
+  }
+
+  async rejectInvitation(invitationId: string, userId: string) {
+    const invitation = await this.prisma.workspaceInvitation.findUnique({
+      where: { id: invitationId },
+    });
+
+    if (!invitation || invitation.inviteeUserId !== userId) {
+      throw new NotFoundException('Invitation not found');
+    }
+
+    if (invitation.status !== 'PENDING') {
+      throw new BadRequestException('Invitation is no longer valid');
+    }
+
+    return this.prisma.workspaceInvitation.update({
+      where: { id: invitationId },
+      data: {
+        status: 'REJECTED',
+        respondedAt: new Date(),
+      },
+    });
+  }
+
   async getWorkspaceMembers(workspaceId: string) {
     return this.prisma.workspaceMember.findMany({
       where: {
@@ -99,7 +286,11 @@ export class WorkspaceService {
     });
   }
 
-  async updateMember(workspaceId: string, userId: string, dto: UpdateMemberDto) {
+  async updateMember(
+    workspaceId: string,
+    userId: string,
+    dto: UpdateMemberDto,
+  ) {
     return this.prisma.workspaceMember.update({
       where: {
         workspaceId_userId: {

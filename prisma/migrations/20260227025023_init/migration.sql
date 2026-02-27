@@ -10,17 +10,54 @@ CREATE TYPE "CategoryType" AS ENUM ('INCOME', 'EXPENSE');
 -- CreateEnum
 CREATE TYPE "TransactionType" AS ENUM ('INCOME', 'EXPENSE', 'TRANSFER');
 
+-- CreateEnum
+CREATE TYPE "VerificationTokenType" AS ENUM ('EMAIL_VERIFICATION', 'PHONE_VERIFICATION', 'PASSWORD_RESET');
+
+-- CreateEnum
+CREATE TYPE "InvitationStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" UUID NOT NULL,
     "name" VARCHAR(150) NOT NULL,
+    "username" VARCHAR(50) NOT NULL,
     "email" VARCHAR(150) NOT NULL,
+    "phoneNumber" VARCHAR(20),
+    "emailVerifiedAt" TIMESTAMP(3),
+    "phoneVerifiedAt" TIMESTAMP(3),
     "password" VARCHAR(255) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "user_sessions" (
+    "id" UUID NOT NULL,
+    "userId" UUID NOT NULL,
+    "refreshTokenHash" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "revokedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "user_sessions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "verification_tokens" (
+    "id" UUID NOT NULL,
+    "userId" UUID NOT NULL,
+    "type" "VerificationTokenType" NOT NULL,
+    "tokenHash" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "usedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "verification_tokens_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -128,8 +165,38 @@ CREATE TABLE "budgets" (
     CONSTRAINT "budgets_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "WorkspaceInvitation" (
+    "id" UUID NOT NULL,
+    "workspaceId" UUID NOT NULL,
+    "inviterUserId" UUID NOT NULL,
+    "inviteeUserId" UUID NOT NULL,
+    "role" "WorkspaceRole" NOT NULL,
+    "status" "InvitationStatus" NOT NULL DEFAULT 'PENDING',
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "respondedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "WorkspaceInvitation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_phoneNumber_key" ON "users"("phoneNumber");
+
+-- CreateIndex
+CREATE INDEX "user_sessions_userId_idx" ON "user_sessions"("userId");
+
+-- CreateIndex
+CREATE INDEX "verification_tokens_userId_idx" ON "verification_tokens"("userId");
+
+-- CreateIndex
+CREATE INDEX "verification_tokens_type_idx" ON "verification_tokens"("type");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "workspace_members_workspaceId_userId_key" ON "workspace_members"("workspaceId", "userId");
@@ -145,6 +212,21 @@ CREATE INDEX "transactions_accountId_idx" ON "transactions"("accountId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "budgets_workspaceId_categoryId_month_year_key" ON "budgets"("workspaceId", "categoryId", "month", "year");
+
+-- CreateIndex
+CREATE INDEX "WorkspaceInvitation_inviteeUserId_idx" ON "WorkspaceInvitation"("inviteeUserId");
+
+-- CreateIndex
+CREATE INDEX "WorkspaceInvitation_status_idx" ON "WorkspaceInvitation"("status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "WorkspaceInvitation_workspaceId_inviteeUserId_key" ON "WorkspaceInvitation"("workspaceId", "inviteeUserId");
+
+-- AddForeignKey
+ALTER TABLE "user_sessions" ADD CONSTRAINT "user_sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "verification_tokens" ADD CONSTRAINT "verification_tokens_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "workspaces"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -181,3 +263,12 @@ ALTER TABLE "budgets" ADD CONSTRAINT "budgets_workspaceId_fkey" FOREIGN KEY ("wo
 
 -- AddForeignKey
 ALTER TABLE "budgets" ADD CONSTRAINT "budgets_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WorkspaceInvitation" ADD CONSTRAINT "WorkspaceInvitation_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "workspaces"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WorkspaceInvitation" ADD CONSTRAINT "WorkspaceInvitation_inviterUserId_fkey" FOREIGN KEY ("inviterUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WorkspaceInvitation" ADD CONSTRAINT "WorkspaceInvitation_inviteeUserId_fkey" FOREIGN KEY ("inviteeUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

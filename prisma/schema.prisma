@@ -48,6 +48,13 @@ enum VerificationTokenType {
   PASSWORD_RESET
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
 /**
  * |--------------------------------------------------------------------------
  * | MODELS
@@ -55,35 +62,38 @@ enum VerificationTokenType {
  */
 
 model User {
-  id       String @id @default(uuid()) @db.Uuid
-  name     String @db.VarChar(150)
-  username String @unique @db.VarChar(50)
-  email    String @unique @db.VarChar(150)
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String    @db.VarChar(150)
+  username        String    @unique @db.VarChar(50)
+  email           String    @unique @db.VarChar(150)
   phoneNumber     String?   @unique @db.VarChar(20)
   emailVerifiedAt DateTime?
   phoneVerifiedAt DateTime?
-  password String @db.VarChar(255)
+  password        String    @db.VarChar(255)
 
-  workspaceMembers WorkspaceMember[]
-  sessions         UserSession[]
+  workspaceMembers   WorkspaceMember[]
+  sessions           UserSession[]
   verificationTokens VerificationToken[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
+  invitationsSent     WorkspaceInvitation[] @relation("Inviter")
+  invitationsReceived WorkspaceInvitation[] @relation("Invitee")
+
   @@map("users")
 }
 
 model UserSession {
-  id               String   @id @default(uuid()) @db.Uuid
-  userId           String   @db.Uuid
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @db.Uuid
   refreshTokenHash String
   expiresAt        DateTime
   ipAddress        String?
   userAgent        String?
   revokedAt        DateTime?
-  createdAt        DateTime @default(now())
+  createdAt        DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -119,9 +129,10 @@ model Workspace {
   savingGoals  SavingGoal[]
   budgets      Budget[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  deletedAt            DateTime?
+  invitations WorkspaceInvitation[]
 
   @@map("workspaces")
 }
@@ -245,4 +256,25 @@ model Budget {
 
   @@unique([workspaceId, categoryId, month, year])
   @@map("budgets")
+}
+
+model WorkspaceInvitation {
+  id              String           @id @default(uuid()) @db.Uuid
+  workspaceId     String           @db.Uuid
+  inviterUserId   String           @db.Uuid
+  inviteeUserId   String           @db.Uuid
+  role            WorkspaceRole
+  status          InvitationStatus @default(PENDING)
+  expiresAt       DateTime
+  respondedAt     DateTime?
+  createdAt       DateTime         @default(now())
+
+  workspace       Workspace        @relation(fields: [workspaceId], references: [id])
+  inviter         User             @relation("Inviter", fields: [inviterUserId], references: [id])
+  invitee         User             @relation("Invitee", fields: [inviteeUserId], references: [id])
+
+  @@unique([workspaceId, inviteeUserId])
+  @@index([inviteeUserId])
+  @@index([status])
+  @@map("workspace_invitations")
 }

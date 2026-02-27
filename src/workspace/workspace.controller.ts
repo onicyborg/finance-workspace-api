@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from './guards/workspace-member.guard';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
+import { InviteUserDto } from './dto/invite-user.dto';
 
 @ApiTags('Workspaces')
 @ApiBearerAuth('access-token')
@@ -66,6 +67,35 @@ export class WorkspaceController {
     return this.workspaceService.addMember(id, dto);
   }
 
+  @ApiOperation({ summary: 'Invite user to workspace (OWNER only)' })
+  @UseGuards(WorkspaceMemberGuard)
+  @Post(':id/invitations')
+  invite(@Param('id') id: string, @Req() req, @Body() dto: InviteUserDto) {
+    if (req.workspaceMember.role !== 'OWNER') {
+      throw new ForbiddenException('Only OWNER can invite users');
+    }
+
+    return this.workspaceService.inviteUser(id, req.user.userId, dto);
+  }
+
+  @ApiOperation({ summary: 'Get my invitations' })
+  @Get('invitations/me')
+  getMyInvitations(@Req() req) {
+    return this.workspaceService.getMyInvitations(req.user.userId);
+  }
+
+  @ApiOperation({ summary: 'Accept invitation' })
+  @Post('invitations/:id/accept')
+  acceptInvitation(@Param('id') id: string, @Req() req) {
+    return this.workspaceService.acceptInvitation(id, req.user.userId);
+  }
+
+  @ApiOperation({ summary: 'Reject invitation' })
+  @Post('invitations/:id/reject')
+  rejectInvitation(@Param('id') id: string, @Req() req) {
+    return this.workspaceService.rejectInvitation(id, req.user.userId);
+  }
+
   @ApiOperation({ summary: 'Get workspace members' })
   @UseGuards(WorkspaceMemberGuard)
   @Get(':id/members')
@@ -73,10 +103,15 @@ export class WorkspaceController {
     return this.workspaceService.getWorkspaceMembers(id);
   }
 
-  @ApiOperation({ summary: "Update member role in workspace (OWNER only)" })
+  @ApiOperation({ summary: 'Update member role in workspace (OWNER only)' })
   @UseGuards(WorkspaceMemberGuard)
   @Patch(':id/members/:userId')
-  updateMember(@Param('id') id: string, @Param('userId') userId: string, @Body() dto: UpdateMemberDto, @Req() req) {
+  updateMember(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Body() dto: UpdateMemberDto,
+    @Req() req,
+  ) {
     if (req.workspaceMember.role !== 'OWNER') {
       throw new ForbiddenException('Only OWNER can update member role');
     }
@@ -87,12 +122,15 @@ export class WorkspaceController {
   @ApiOperation({ summary: 'Remove member from workspace (OWNER only)' })
   @UseGuards(WorkspaceMemberGuard)
   @Delete(':id/members/:userId')
-  removeMember(@Param('id') id: string, @Param('userId') userId: string, @Req() req) {
+  removeMember(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Req() req,
+  ) {
     if (req.workspaceMember.role !== 'OWNER') {
       throw new ForbiddenException('Only OWNER can remove members');
     }
 
     return this.workspaceService.removeMember(id, userId);
   }
-  
 }
