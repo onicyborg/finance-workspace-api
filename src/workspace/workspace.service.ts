@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
-import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
 import { MailService } from 'src/mail/mail.service';
@@ -80,16 +79,6 @@ export class WorkspaceService {
   }
 
   // MEMBER WORKSPACE
-
-  async addMember(workspaceId: string, dto: AddMemberDto) {
-    return this.prisma.workspaceMember.create({
-      data: {
-        workspaceId,
-        userId: dto.userId,
-        role: dto.role,
-      },
-    });
-  }
 
   async inviteUser(
     workspaceId: string,

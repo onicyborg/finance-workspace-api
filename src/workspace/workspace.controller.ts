@@ -15,7 +15,6 @@ import { WorkspaceService } from './workspace.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from './guards/workspace-member.guard';
-import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
 
@@ -55,17 +54,6 @@ export class WorkspaceController {
   }
 
   //   MEMBER WORKSPACE
-
-  @ApiOperation({ summary: 'Add member to workspace (OWNER only)' })
-  @UseGuards(WorkspaceMemberGuard)
-  @Post(':id/members')
-  addMember(@Param('id') id: string, @Body() dto: AddMemberDto, @Req() req) {
-    if (req.workspaceMember.role !== 'OWNER') {
-      throw new ForbiddenException('Only OWNER can add members');
-    }
-
-    return this.workspaceService.addMember(id, dto);
-  }
 
   @ApiOperation({ summary: 'Invite user to workspace (OWNER only)' })
   @UseGuards(WorkspaceMemberGuard)
