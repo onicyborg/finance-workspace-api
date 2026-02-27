@@ -13,7 +13,11 @@ export class WorkspaceMemberGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    const workspaceId = request.params.id;
+    const workspaceId = request.params.id ?? request.params.workspaceId;
+
+    if (!workspaceId) {
+      throw new ForbiddenException('Workspace id is missing from route params');
+    }
 
     const member = await this.prisma.workspaceMember.findUnique({
       where: {
