@@ -35,6 +35,25 @@ export class WorkspaceService {
         },
       });
 
+      await tx.category.createMany({
+        data: [
+          // INCOME
+          { workspaceId: workspace.id, name: 'Salary', type: 'INCOME' },
+          { workspaceId: workspace.id, name: 'Bonus', type: 'INCOME' },
+          { workspaceId: workspace.id, name: 'Investment', type: 'INCOME' },
+          { workspaceId: workspace.id, name: 'Other Income', type: 'INCOME' },
+
+          // EXPENSE
+          { workspaceId: workspace.id, name: 'Food', type: 'EXPENSE' },
+          { workspaceId: workspace.id, name: 'Transport', type: 'EXPENSE' },
+          { workspaceId: workspace.id, name: 'Bills', type: 'EXPENSE' },
+          { workspaceId: workspace.id, name: 'Entertainment', type: 'EXPENSE' },
+          { workspaceId: workspace.id, name: 'Shopping', type: 'EXPENSE' },
+          { workspaceId: workspace.id, name: 'Health', type: 'EXPENSE' },
+          { workspaceId: workspace.id, name: 'Other Expense', type: 'EXPENSE' },
+        ],
+      });
+
       return workspace;
     });
   }
