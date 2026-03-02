@@ -9,6 +9,7 @@ import {
   Delete,
   Req,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -16,6 +17,7 @@ import { WorkspaceMemberGuard } from 'src/workspace/guards/workspace-member.guar
 import { CreateAccountDto } from './dto/create-account.dto';
 import { AccountsService } from './accounts.service';
 import { UpdateAccountDto } from './dto/update-account.dto';
+import { AccountQueryDto } from './dto/account-query.dto';
 
 @ApiTags('Workspaces')
 @ApiBearerAuth('access-token')
@@ -40,15 +42,27 @@ export class AccountsController {
     return this.accountsService.create(workspaceId, dto);
   }
 
+  @Get('meta')
+  @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
+  metaFilter(@Param('workspaceId') workspaceId: string) {
+    return this.accountsService.metaFilter(workspaceId);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
-  findAll(@Param('workspaceId') workspaceId: string) {
-    return this.accountsService.findAll(workspaceId);
+  findAll(
+    @Param('workspaceId') workspaceId: string,
+    @Query() query: AccountQueryDto,
+  ) {
+    return this.accountsService.findAll(workspaceId, query);
   }
 
   @Get(':accountId')
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
-  findOne(@Param('workspaceId') workspaceId: string, @Param('accountId') accountId: string) {
+  findOne(
+    @Param('workspaceId') workspaceId: string,
+    @Param('accountId') accountId: string,
+  ) {
     return this.accountsService.findOne(workspaceId, accountId);
   }
 
