@@ -1,7 +1,9 @@
 import {
   Controller,
+  Delete,
   ForbiddenException,
   Get,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -12,6 +14,7 @@ import { WorkspaceMemberGuard } from 'src/workspace/guards/workspace-member.guar
 import { Param, Req, Body } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
 
 @Controller('workspaces/:workspaceId/transactions')
 export class TransactionsController {
@@ -33,6 +36,12 @@ export class TransactionsController {
     return this.transactionsService.create(workspaceId, dto);
   }
 
+  @Get('meta')
+  @UseGuards(JwtAuthGuard)
+  metaFilter(@Param('workspaceId') workspaceId: string) {
+    return this.transactionsService.metaFilter(workspaceId);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   findAll(
@@ -40,5 +49,38 @@ export class TransactionsController {
     @Query() query: TransactionQueryDto,
   ) {
     return this.transactionsService.findAll(workspaceId, query);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
+  update(
+    @Param('workspaceId') workspaceId: string,
+    @Param('id') id: string,
+    @Req() req,
+    @Body() dto: UpdateTransactionDto,
+  ) {
+    const role = req.workspaceMember.role;
+
+    if (!['OWNER', 'EDITOR'].includes(role)) {
+      throw new ForbiddenException('Insufficient permission');
+    }
+
+    return this.transactionsService.update(workspaceId, id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
+  delete(
+    @Param('workspaceId') workspaceId: string,
+    @Param('id') id: string,
+    @Req() req,
+  ) {
+    const role = req.workspaceMember.role;
+
+    if (!['OWNER', 'EDITOR'].includes(role)) {
+      throw new ForbiddenException('Insufficient permission');
+    }
+
+    return this.transactionsService.delete(workspaceId, id);
   }
 }

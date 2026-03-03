@@ -11,7 +11,9 @@ export class TransactionQueryDto extends BasePaginationDto {
     example: 'EXPENSE',
   })
   @IsOptional()
-  @IsEnum(['INCOME', 'EXPENSE', 'TRANSFER'])
+  @IsEnum(['INCOME', 'EXPENSE', 'TRANSFER'],{
+    message: 'Invalid transaction type'
+  })
   type?: 'INCOME' | 'EXPENSE' | 'TRANSFER';
 
   @ApiPropertyOptional({

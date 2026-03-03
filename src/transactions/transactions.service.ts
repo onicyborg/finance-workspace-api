@@ -7,6 +7,7 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Account } from '@prisma/client';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -160,6 +161,22 @@ export class TransactionsService {
     });
   }
 
+  async metaFilter(workspaceId: string) {
+    const types = ['INCOME', 'EXPENSE', 'TRANSFER'];
+
+    const categories = await this.prisma.category.findMany({
+      where: { workspaceId },
+      select: { id: true, name: true, type: true },
+    });
+
+    const accounts = await this.prisma.account.findMany({
+      where: { workspaceId },
+      select: { id: true, name: true },
+    });
+
+    return { types, categories, accounts };
+  }
+
   async findAll(workspaceId: string, query: TransactionQueryDto) {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 10, 50);
@@ -194,16 +211,30 @@ export class TransactionsService {
       where.transactionDate = {};
 
       if (query.startDate) {
-        where.transactionDate.gte = new Date(query.startDate);
+        // Set start date to beginning of day (00:00:00)
+        const startDate = new Date(query.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        where.transactionDate.gte = startDate;
       }
 
       if (query.endDate) {
-        where.transactionDate.lte = new Date(query.endDate);
+        // Set end date to end of day (23:59:59.999)
+        const endDate = new Date(query.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        where.transactionDate.lte = endDate;
       }
-    }else{
+    } else {
+      // Default: show transactions from today only
+      const today = new Date();
+      const startOfDay = new Date(today);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+
       where.transactionDate = {
-        gte: new Date(),
-        lte: new Date(),
+        gte: startOfDay,
+        lte: endOfDay,
       };
     }
 
@@ -233,5 +264,178 @@ export class TransactionsService {
         lastPage: Math.ceil(total / limit),
       },
     };
+  }
+
+  async update(workspaceId: string, id: string, dto: UpdateTransactionDto) {
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.transaction.findFirst({
+        where: { id, workspaceId, deletedAt: null },
+      });
+
+      if (!existing) {
+        throw new NotFoundException('Transaction not found');
+      }
+
+      // ⏳ 5 minute rule
+      const diff = Date.now() - existing.createdAt.getTime();
+      if (diff > 5 * 60 * 1000) {
+        throw new BadRequestException(
+          'Transaction can only be updated within 5 minutes',
+        );
+      }
+
+      // 🔁 1️⃣ Reverse Old Mutation
+
+      await this.reverseMutation(tx, existing);
+
+      // 🔄 2️⃣ Merge new data
+      const newData = {
+        type: dto.type ?? existing.type,
+        accountId: dto.accountId ?? existing.accountId,
+        toAccountId:
+          dto.type === 'TRANSFER'
+            ? (dto.toAccountId ?? existing.toAccountId)
+            : null,
+        amount: dto.amount ?? Number(existing.amount),
+        categoryId: dto.categoryId ?? existing.categoryId,
+        description: dto.description ?? existing.description,
+        transactionDate: dto.transactionDate
+          ? new Date(dto.transactionDate)
+          : existing.transactionDate,
+      };
+
+      // 🔎 3️⃣ Validate new mutation
+      await this.validateAndApplyMutation(tx, workspaceId, newData);
+
+      // 📝 4️⃣ Update record
+      return tx.transaction.update({
+        where: { id },
+        data: newData,
+      });
+    });
+  }
+
+  async delete(workspaceId: string, id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.transaction.findFirst({
+        where: {
+          id,
+          workspaceId,
+          deletedAt: null,
+        },
+      });
+
+      if (!existing) {
+        throw new NotFoundException('Transaction not found');
+      }
+
+      // ⏳ 5 minute rule
+      const diff = Date.now() - existing.createdAt.getTime();
+
+      if (diff > 5 * 60 * 1000) {
+        throw new BadRequestException(
+          'Transaction can only be deleted within 5 minutes of creation',
+        );
+      }
+
+      // 🔁 Reverse mutation
+      await this.reverseMutation(tx, existing);
+
+      // 🗑 Soft delete
+      return tx.transaction.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
+    });
+  }
+
+  private async reverseMutation(tx, trx) {
+    if (trx.type === 'INCOME') {
+      await tx.account.update({
+        where: { id: trx.accountId },
+        data: { balance: { decrement: Number(trx.amount) } },
+      });
+    }
+
+    if (trx.type === 'EXPENSE') {
+      await tx.account.update({
+        where: { id: trx.accountId },
+        data: { balance: { increment: Number(trx.amount) } },
+      });
+    }
+
+    if (trx.type === 'TRANSFER') {
+      await tx.account.update({
+        where: { id: trx.accountId },
+        data: { balance: { increment: Number(trx.amount) } },
+      });
+
+      await tx.account.update({
+        where: { id: trx.toAccountId },
+        data: { balance: { decrement: Number(trx.amount) } },
+      });
+    }
+  }
+
+  private async validateAndApplyMutation(tx, workspaceId, data) {
+    const fromAccount = await tx.account.findFirst({
+      where: {
+        id: data.accountId,
+        workspaceId,
+        deletedAt: null,
+        isActive: true,
+      },
+    });
+
+    if (!fromAccount) {
+      throw new NotFoundException('Account not found or inactive');
+    }
+
+    if (data.type === 'EXPENSE' || data.type === 'TRANSFER') {
+      if (Number(fromAccount.balance) < data.amount) {
+        throw new BadRequestException('Insufficient balance');
+      }
+    }
+
+    if (data.type === 'INCOME') {
+      await tx.account.update({
+        where: { id: fromAccount.id },
+        data: { balance: { increment: data.amount } },
+      });
+    }
+
+    if (data.type === 'EXPENSE') {
+      await tx.account.update({
+        where: { id: fromAccount.id },
+        data: { balance: { decrement: data.amount } },
+      });
+    }
+
+    if (data.type === 'TRANSFER') {
+      const toAccount = await tx.account.findFirst({
+        where: {
+          id: data.toAccountId,
+          workspaceId,
+          deletedAt: null,
+          isActive: true,
+        },
+      });
+
+      if (!toAccount) {
+        throw new NotFoundException('Destination account not found');
+      }
+
+      await tx.account.update({
+        where: { id: fromAccount.id },
+        data: { balance: { decrement: data.amount } },
+      });
+
+      await tx.account.update({
+        where: { id: toAccount.id },
+        data: { balance: { increment: data.amount } },
+      });
+    }
   }
 }
