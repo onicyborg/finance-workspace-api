@@ -135,7 +135,7 @@ export class WorkspaceService {
       throw new BadRequestException('User is already a member');
     }
 
-    // Cek sudah ada invitation pending?
+    // Cek sudah ada invitation?
     const existingInvitation = await this.prisma.workspaceInvitation.findUnique(
       {
         where: {
@@ -147,8 +147,20 @@ export class WorkspaceService {
       },
     );
 
-    if (existingInvitation && existingInvitation.status === 'PENDING') {
-      throw new BadRequestException('Invitation already sent');
+    if (existingInvitation) {
+      if (existingInvitation.status === 'PENDING') {
+        throw new BadRequestException('Invitation already sent');
+      }
+      
+      // Hapus invitation lama (REJECTED/EXPIRED) untuk buat baru
+      await this.prisma.workspaceInvitation.delete({
+        where: {
+          workspaceId_inviteeUserId: {
+            workspaceId,
+            inviteeUserId: targetUser.id,
+          },
+        },
+      });
     }
 
     const expiresAt = new Date();

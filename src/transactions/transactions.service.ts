@@ -189,6 +189,7 @@ export class TransactionsService {
     }
 
     // 🔎 Filter: date range
+
     if (query.startDate || query.endDate) {
       where.transactionDate = {};
 
@@ -199,6 +200,11 @@ export class TransactionsService {
       if (query.endDate) {
         where.transactionDate.lte = new Date(query.endDate);
       }
+    }else{
+      where.transactionDate = {
+        gte: new Date(),
+        lte: new Date(),
+      };
     }
 
     const [items, total] = await this.prisma.$transaction([
