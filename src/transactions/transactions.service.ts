@@ -13,7 +13,10 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 export class TransactionsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(workspaceId: string, dto: CreateTransactionDto) {
+  async create(workspaceId: string, dto: CreateTransactionDto, userId: string) {
+    if (!userId) {
+      throw new BadRequestException('User id is required');
+    }
     return this.prisma.$transaction(async (tx) => {
       // 🔎 1. Get from account
       const fromAccount = await tx.account.findFirst({
@@ -156,6 +159,8 @@ export class TransactionsService {
           transactionDate: dto.transactionDate
             ? new Date(dto.transactionDate)
             : new Date(),
+          createdById: userId,
+          updatedById: userId,
         },
       });
     });
@@ -266,7 +271,15 @@ export class TransactionsService {
     };
   }
 
-  async update(workspaceId: string, id: string, dto: UpdateTransactionDto) {
+  async update(
+    workspaceId: string,
+    id: string,
+    dto: UpdateTransactionDto,
+    userId: string,
+  ) {
+    if (!userId) {
+      throw new BadRequestException('User id is required');
+    }
     return this.prisma.$transaction(async (tx) => {
       const existing = await tx.transaction.findFirst({
         where: { id, workspaceId, deletedAt: null },
@@ -310,12 +323,18 @@ export class TransactionsService {
       // 📝 4️⃣ Update record
       return tx.transaction.update({
         where: { id },
-        data: newData,
+        data: {
+          ...newData,
+          updatedById: userId,
+        },
       });
     });
   }
 
-  async delete(workspaceId: string, id: string) {
+  async delete(workspaceId: string, id: string, userId: string) {
+    if (!userId) {
+      throw new BadRequestException('User id is required');
+    }
     return this.prisma.$transaction(async (tx) => {
       const existing = await tx.transaction.findFirst({
         where: {
@@ -346,6 +365,7 @@ export class TransactionsService {
         where: { id },
         data: {
           deletedAt: new Date(),
+          updatedById: userId,
         },
       });
     });

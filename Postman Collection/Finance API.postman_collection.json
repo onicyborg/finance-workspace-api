@@ -17,7 +17,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"name\": \"Toni Struk\",\r\n    \"username\": \"tony123\",\r\n    \"email\": \"blackboy.ziee@gmail.com\",\r\n    \"phoneNumber\": \"+6281347890522\",\r\n    \"password\": \"Qwerty123*\"\r\n}",
+              "raw": "{\r\n    \"name\": \"Defyana Khalida Zahra\",\r\n    \"username\": \"defyana\",\r\n    \"email\": \"19103079@ittelkom-pwt.ac.id\",\r\n    \"phoneNumber\": \"+6281347890521\",\r\n    \"password\": \"Qwerty123*\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -72,7 +72,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"token\" : \"a917adc63b05edfa3ba0b8c9aee74dc0d01472bab210e8b827d636409f1df7d7\"\r\n}",
+              "raw": "{\r\n    \"token\" : \"c49be635bfd23e2a892bc3ab84779a3301682a3e9a981a5cb75716c3cc53a5e8\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -605,7 +605,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n    \"name\" : \"Bank BCA\",\r\n    \"type\" : \"BANK\", // 'CASH' | 'BANK' | 'EWALLET' | 'SAVING'\r\n    \"currency\" : \"IDR\",\r\n    \"initialBalance\" : 100000\r\n}",
+                  "raw": "{\r\n    \"name\" : \"Stockbit\",\r\n    \"type\" : \"SAVING\", // 'CASH' | 'BANK' | 'EWALLET' | 'SAVING'\r\n    \"currency\" : \"IDR\",\r\n    \"initialBalance\" : 100000\r\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1033,7 +1033,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n    \"type\": \"TRANSFER\", // EXPENSE | INCOME | TRANSFER\r\n    \"accountId\": \"504f6471-8911-4cf4-bcce-6a107416d93c\",\r\n    \"toAccountId\" : \"6f730e1f-854f-4beb-9ac6-6ddbe5099878\", // Required if type = TRANSFER\r\n    \"amount\": 500000,\r\n    // \"categoryId\" : \"c1beeb8d-1dc5-4f4b-b143-e8492fed9c95\", // null if type = TRANSFER\r\n    \"description\": \"Nabung\"\r\n    // \"transactionDate\": \"2026-02-27T10:00:00.000Z\" | OPTIONAL\r\n}",
+                  "raw": "{\r\n    \"type\": \"EXPENSE\", // EXPENSE | INCOME | TRANSFER\r\n    \"accountId\": \"0da3dd13-9188-4e36-b45f-e1d7d6432eed\",\r\n    // \"toAccountId\" : \"6f730e1f-854f-4beb-9ac6-6ddbe5099878\", // Required if type = TRANSFER\r\n    \"amount\": 25000,\r\n    \"categoryId\" : \"061871d7-30d9-45bf-8e57-2a8edc7fecdb\", // null if type = TRANSFER\r\n    \"description\": \"Jajan\"\r\n    // \"transactionDate\": \"2026-02-27T10:00:00.000Z\" | OPTIONAL\r\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1179,7 +1179,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n    \"type\": \"EXPENSE\", // EXPENSE | INCOME | TRANSFER\r\n    \"accountId\": \"6f730e1f-854f-4beb-9ac6-6ddbe5099878\",\r\n    // \"toAccountId\" : \"504f6471-8911-4cf4-bcce-6a107416d93c\", // Required if type = TRANSFER\r\n    \"amount\": 500000,\r\n    \"categoryId\" : \"806e1b42-527f-411a-85b3-c5ae60b5b9a6\", // null if type = TRANSFER\r\n    \"description\": \"Tarik Tunai\"\r\n    // \"transactionDate\": \"2026-02-27T10:00:00.000Z\" | OPTIONAL\r\n}",
+                  "raw": "{\r\n    \"type\": \"EXPENSE\", // EXPENSE | INCOME | TRANSFER\r\n    \"accountId\": \"0da3dd13-9188-4e36-b45f-e1d7d6432eed\",\r\n    // \"toAccountId\" : \"6f730e1f-854f-4beb-9ac6-6ddbe5099878\", // Required if type = TRANSFER\r\n    \"amount\": 10000,\r\n    \"categoryId\" : \"061871d7-30d9-45bf-8e57-2a8edc7fecdb\", // null if type = TRANSFER\r\n    \"description\": \"Jajan\"\r\n    // \"transactionDate\": \"2026-02-27T10:00:00.000Z\" | OPTIONAL\r\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1250,7 +1250,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"name\" : \"My Personal Finance 3\",\r\n    \"description\" : \"Tracking daily expenses\"\r\n}",
+              "raw": "{\r\n    \"name\" : \"My Personal Finance\",\r\n    \"description\" : \"Tracking daily expenses\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"

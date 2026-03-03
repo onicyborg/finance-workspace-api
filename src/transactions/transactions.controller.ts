@@ -28,12 +28,13 @@ export class TransactionsController {
     @Body() dto: CreateTransactionDto,
   ) {
     const role = req.workspaceMember.role;
+    const userId = req.user.userId;
 
     if (!['OWNER', 'EDITOR'].includes(role)) {
       throw new ForbiddenException('Insufficient permission');
     }
 
-    return this.transactionsService.create(workspaceId, dto);
+    return this.transactionsService.create(workspaceId, dto, userId);
   }
 
   @Get('meta')
@@ -60,12 +61,13 @@ export class TransactionsController {
     @Body() dto: UpdateTransactionDto,
   ) {
     const role = req.workspaceMember.role;
+    const userId = req.user.userId;
 
     if (!['OWNER', 'EDITOR'].includes(role)) {
       throw new ForbiddenException('Insufficient permission');
     }
 
-    return this.transactionsService.update(workspaceId, id, dto);
+    return this.transactionsService.update(workspaceId, id, dto, userId);
   }
 
   @Delete(':id')
@@ -76,11 +78,12 @@ export class TransactionsController {
     @Req() req,
   ) {
     const role = req.workspaceMember.role;
+    const userId = req.user.userId;
 
     if (!['OWNER', 'EDITOR'].includes(role)) {
       throw new ForbiddenException('Insufficient permission');
     }
 
-    return this.transactionsService.delete(workspaceId, id);
+    return this.transactionsService.delete(workspaceId, id, userId);
   }
 }
