@@ -7,7 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
-import { MailService } from 'src/mail/mail.service';
+import { MailService } from '../mail/mail.service';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 
 @Injectable()
