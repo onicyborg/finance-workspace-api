@@ -11,7 +11,7 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from 'src/workspace/guards/workspace-member.guard';
 import { CreateAccountDto } from './dto/create-account.dto';
@@ -26,6 +26,7 @@ import { AccountQueryDto } from './dto/account-query.dto';
 export class AccountsController {
   constructor(private accountsService: AccountsService) {}
 
+  @ApiOperation({ summary: 'Create account' })
   @Post()
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   create(
@@ -42,12 +43,14 @@ export class AccountsController {
     return this.accountsService.create(workspaceId, dto);
   }
 
+  @ApiOperation({ summary: 'Get accounts filter metadata' })
   @Get('meta')
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   metaFilter(@Param('workspaceId') workspaceId: string) {
     return this.accountsService.metaFilter(workspaceId);
   }
 
+  @ApiOperation({ summary: 'List accounts' })
   @Get()
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   findAll(
@@ -57,6 +60,7 @@ export class AccountsController {
     return this.accountsService.findAll(workspaceId, query);
   }
 
+  @ApiOperation({ summary: 'Get account detail' })
   @Get(':accountId')
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   findOne(
@@ -66,6 +70,7 @@ export class AccountsController {
     return this.accountsService.findOne(workspaceId, accountId);
   }
 
+  @ApiOperation({ summary: 'Update account' })
   @Patch(':accountId')
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   update(
@@ -83,6 +88,7 @@ export class AccountsController {
     return this.accountsService.update(workspaceId, accountId, dto);
   }
 
+  @ApiOperation({ summary: 'Delete account (OWNER only)' })
   @Delete(':accountId')
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   delete(

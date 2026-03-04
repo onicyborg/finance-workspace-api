@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from 'src/workspace/guards/workspace-member.guard';
@@ -20,6 +21,7 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
+  @ApiOperation({ summary: 'Create transaction' })
   @Post()
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   create(
@@ -37,12 +39,14 @@ export class TransactionsController {
     return this.transactionsService.create(workspaceId, dto, userId);
   }
 
+  @ApiOperation({ summary: 'Get transactions filter metadata' })
   @Get('meta')
   @UseGuards(JwtAuthGuard)
   metaFilter(@Param('workspaceId') workspaceId: string) {
     return this.transactionsService.metaFilter(workspaceId);
   }
 
+  @ApiOperation({ summary: 'List transactions' })
   @Get()
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   findAll(
@@ -52,6 +56,7 @@ export class TransactionsController {
     return this.transactionsService.findAll(workspaceId, query);
   }
 
+  @ApiOperation({ summary: 'Update transaction' })
   @Patch(':id')
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   update(
@@ -70,6 +75,7 @@ export class TransactionsController {
     return this.transactionsService.update(workspaceId, id, dto, userId);
   }
 
+  @ApiOperation({ summary: 'Delete transaction' })
   @Delete(':id')
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   delete(

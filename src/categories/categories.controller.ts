@@ -11,6 +11,7 @@ import {
   ForbiddenException,
   Query,
 } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from '../workspace/guards/workspace-member.guard';
@@ -22,6 +23,7 @@ import { CategoryQueryDto } from './dto/category-query.dto';
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  @ApiOperation({ summary: 'Create category' })
   @Post()
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   create(
@@ -38,18 +40,21 @@ export class CategoriesController {
     return this.categoriesService.create(workspaceId, dto);
   }
 
+  @ApiOperation({ summary: 'List categories' })
   @Get()
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   findAll(@Param('workspaceId') workspaceId: string, @Query() query: CategoryQueryDto) {
     return this.categoriesService.findAll(workspaceId, query);
   }
 
+  @ApiOperation({ summary: 'Get category detail' })
   @Get(':id')
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   findOne(@Param('workspaceId') workspaceId: string, @Param('id') id: string) {
     return this.categoriesService.findOne(workspaceId, id);
   }
 
+  @ApiOperation({ summary: 'Update category' })
   @Patch(':id')
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   update(
@@ -67,6 +72,7 @@ export class CategoriesController {
     return this.categoriesService.update(workspaceId, id, dto);
   }
 
+  @ApiOperation({ summary: 'Delete category (OWNER only)' })
   @Delete(':id')
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   delete(
