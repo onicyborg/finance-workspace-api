@@ -59,6 +59,19 @@ export class TransactionsController {
     return this.transactionsService.findAll(workspaceId, query);
   }
 
+  @ApiOperation({ summary: 'Get Detail Transactions' })
+  @Get(':transactionId')
+  @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
+  async getTransactionById(
+    @Param('workspaceId') workspaceId: string,
+    @Param('transactionId') transactionId: string,
+  ) {
+    return this.transactionsService.getTransactionById(
+      workspaceId,
+      transactionId,
+    );
+  }
+
   @ApiOperation({ summary: 'Update transaction' })
   @Patch(':id')
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
@@ -100,18 +113,31 @@ export class TransactionsController {
   @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
   @UseInterceptors(AnyFilesInterceptor())
   async uploadAttachment(
+    @Param('workspaceId') workspaceId: string,
     @Param('transactionId') transactionId: string,
     @UploadedFiles() files: Express.Multer.File[],
     @Req() req,
   ) {
-    const file = files?.[0];
-    if (!file) {
+    if (!files?.length) {
       throw new ForbiddenException('File is required');
     }
 
-    return this.transactionsService.uploadAttachment(
+    return this.transactionsService.uploadAttachments(
+      workspaceId,
       transactionId,
-      file,
+      files,
+      req.user.userId,
+    );
+  }
+
+  @Get('attachments/:attachmentId/download')
+  @UseGuards(JwtAuthGuard)
+  async downloadAttachment(
+    @Param('attachmentId') attachmentId: string,
+    @Req() req,
+  ) {
+    return this.transactionsService.getAttachmentDownloadUrl(
+      attachmentId,
       req.user.userId,
     );
   }

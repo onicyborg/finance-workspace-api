@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
 import sharp from 'sharp';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class StorageService {
@@ -28,25 +28,6 @@ export class StorageService {
         secretAccessKey,
       },
     });
-  }
-
-  async createUploadUrl(fileType: string) {
-    const key = `transactions/${randomUUID()}`;
-
-    const command = new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      ContentType: fileType,
-    });
-
-    const uploadUrl = await getSignedUrl(this.client, command, {
-      expiresIn: 60, // URL berlaku 60 detik
-    });
-
-    return {
-      key,
-      uploadUrl,
-    };
   }
 
   async uploadTransactionAttachment(
@@ -78,5 +59,18 @@ export class StorageService {
       size: compressed.length,
       mimeType: 'image/jpeg',
     };
+  }
+
+  async generateDownloadUrl(key: string) {
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    const url = await getSignedUrl(this.client, command, {
+      expiresIn: 60,
+    });
+
+    return url;
   }
 }

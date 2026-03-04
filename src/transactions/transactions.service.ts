@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,9 +10,6 @@ import { Account } from '@prisma/client';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { StorageService } from 'src/storage/storage.service';
-import sharp from 'sharp';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { randomUUID } from 'crypto';
 
 @Injectable()
 export class TransactionsService {
@@ -278,6 +276,67 @@ export class TransactionsService {
     };
   }
 
+  async getTransactionById(workspaceId: string, transactionId: string) {
+    const transaction = await this.prisma.transaction.findFirst({
+      where: {
+        id: transactionId,
+        workspaceId,
+        deletedAt: null,
+      },
+      include: {
+        account: true,
+        category: true,
+        attachments: true,
+      },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException('Transaction not found');
+    }
+
+    const attachments = await Promise.all(
+      transaction.attachments.map(async (attachment) => {
+        const downloadUrl = await this.storageService.generateDownloadUrl(
+          attachment.key,
+        );
+
+        return {
+          id: attachment.id,
+          fileName: attachment.fileName,
+          mimeType: attachment.mimeType,
+          size: attachment.size,
+          createdAt: attachment.createdAt,
+          downloadUrl,
+        };
+      }),
+    );
+
+    return {
+      id: transaction.id,
+      type: transaction.type,
+      amount: transaction.amount,
+      description: transaction.description,
+      transactionDate: transaction.transactionDate,
+      createdAt: transaction.createdAt,
+
+      account: {
+        id: transaction.account.id,
+        name: transaction.account.name,
+        type: transaction.account.type,
+      },
+
+      category: transaction.category
+        ? {
+            id: transaction.category.id,
+            name: transaction.category.name,
+            type: transaction.category.type,
+          }
+        : null,
+
+      attachments,
+    };
+  }
+
   async update(
     workspaceId: string,
     id: string,
@@ -471,28 +530,99 @@ export class TransactionsService {
     file: Express.Multer.File,
     userId: string,
   ) {
-    const trx = await this.prisma.transaction.findUnique({
-      where: { id: transactionId },
+    const [created] = await this.uploadAttachments(
+      '',
+      transactionId,
+      [file],
+      userId,
+    );
+    return created;
+  }
+
+  async uploadAttachments(
+    workspaceId: string,
+    transactionId: string,
+    files: Express.Multer.File[],
+    userId: string,
+  ) {
+    if (!userId) {
+      throw new BadRequestException('User id is required');
+    }
+
+    if (!files?.length) {
+      throw new BadRequestException('File is required');
+    }
+
+    const trx = await this.prisma.transaction.findFirst({
+      where: {
+        id: transactionId,
+        ...(workspaceId ? { workspaceId } : {}),
+        deletedAt: null,
+      },
+      select: { id: true },
     });
 
     if (!trx) {
       throw new NotFoundException('Transaction not found');
     }
 
-    const uploaded = await this.storageService.uploadTransactionAttachment(
-      transactionId,
-      file,
-    );
+    return this.prisma.$transaction(async (tx) => {
+      const created: any[] = [];
 
-    return this.prisma.transactionAttachment.create({
-      data: {
-        transactionId,
-        key: uploaded.key,
-        fileName: file.originalname,
-        mimeType: uploaded.mimeType,
-        size: uploaded.size,
-        uploadedById: userId,
+      for (const file of files) {
+        const uploaded = await this.storageService.uploadTransactionAttachment(
+          transactionId,
+          file,
+        );
+
+        created.push(
+          await tx.transactionAttachment.create({
+            data: {
+              transactionId,
+              key: uploaded.key,
+              fileName: file.originalname,
+              mimeType: uploaded.mimeType,
+              size: uploaded.size,
+              uploadedById: userId,
+            },
+          }),
+        );
+      }
+
+      return created;
+    });
+  }
+
+  async getAttachmentDownloadUrl(attachmentId: string, userId: string) {
+    const attachment = await this.prisma.transactionAttachment.findUnique({
+      where: { id: attachmentId },
+      include: {
+        transaction: true,
       },
     });
+
+    if (!attachment) {
+      throw new NotFoundException('Attachment not found');
+    }
+
+    // 🔒 cek apakah user member workspace
+    const member = await this.prisma.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: {
+          workspaceId: attachment.transaction.workspaceId,
+          userId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('You are not a member of this workspace');
+    }
+
+    const url = await this.storageService.generateDownloadUrl(attachment.key);
+
+    return {
+      downloadUrl: url,
+    };
   }
 }
