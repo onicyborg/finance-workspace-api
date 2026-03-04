@@ -285,6 +285,7 @@ export class TransactionsService {
       },
       include: {
         account: true,
+        toAccount: true,
         category: true,
         attachments: true,
       },
@@ -324,6 +325,15 @@ export class TransactionsService {
         name: transaction.account.name,
         type: transaction.account.type,
       },
+
+      toAccount:
+        transaction.type === 'TRANSFER' && transaction.toAccount
+          ? {
+              id: transaction.toAccount.id,
+              name: transaction.toAccount.name,
+              type: transaction.toAccount.type,
+            }
+          : null,
 
       category: transaction.category
         ? {
