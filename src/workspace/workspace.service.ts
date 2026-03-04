@@ -8,6 +8,7 @@ import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
 import { MailService } from 'src/mail/mail.service';
+import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 
 @Injectable()
 export class WorkspaceService {
@@ -75,6 +76,21 @@ export class WorkspaceService {
         },
       },
     });
+  }
+
+  async updateWorkspace(workspaceId: string, dto: UpdateWorkspaceDto){
+    const workspace = await this.getWorkspaceById(workspaceId);
+
+    if (!workspace) {
+      throw new NotFoundException('Workspace not found');
+    }
+
+    return this.prisma.workspace.update(
+      {
+        where: { id: workspaceId },
+        data: dto,
+      }
+    )
   }
 
   async getWorkspaceById(workspaceId: string) {

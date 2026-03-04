@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from './guards/workspace-member.guard';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
+import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 
 @ApiTags('Workspaces')
 @ApiBearerAuth('access-token')
@@ -44,6 +45,13 @@ export class WorkspaceController {
   @Get(':id')
   getDetail(@Param('id') id: string) {
     return this.workspaceService.getWorkspaceById(id);
+  }
+
+  @ApiOperation({ summary: 'Update Workspace' })
+  @UseGuards(WorkspaceMemberGuard)
+  @Patch(':id')
+  updateWorkspace(@Param('id') id: string, @Body() dto: UpdateWorkspaceDto) {
+    return this.workspaceService.updateWorkspace(id, dto);
   }
 
   @ApiOperation({ summary: 'Delete Workspace' })
