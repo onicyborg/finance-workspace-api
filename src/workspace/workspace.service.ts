@@ -122,11 +122,11 @@ export class WorkspaceService {
   ) {
     // Cari user by username/email
     const targetUser = dto.usernameOrEmail.includes('@')
-      ? await this.prisma.user.findUnique({
-          where: { email: dto.usernameOrEmail },
+      ? await this.prisma.user.findFirst({
+          where: { email: dto.usernameOrEmail, deletedAt: null },
         })
-      : await this.prisma.user.findUnique({
-          where: { username: dto.usernameOrEmail },
+      : await this.prisma.user.findFirst({
+          where: { username: dto.usernameOrEmail, deletedAt: null },
         });
 
     if (!targetUser) {
@@ -192,8 +192,8 @@ export class WorkspaceService {
       },
     });
 
-    const workspace = await this.prisma.workspace.findUnique({
-      where: { id: workspaceId },
+    const workspace = await this.prisma.workspace.findFirst({
+      where: { id: workspaceId, deletedAt: null },
     });
 
     const inviter = await this.prisma.user.findUnique({
@@ -220,6 +220,8 @@ export class WorkspaceService {
       where: {
         inviteeUserId: userId,
         status: 'PENDING',
+        workspace: { deletedAt: null },
+        inviter: { deletedAt: null },
       },
       include: {
         workspace: {
@@ -309,6 +311,9 @@ export class WorkspaceService {
     return this.prisma.workspaceMember.findMany({
       where: {
         workspaceId,
+        user: {
+          deletedAt: null,
+        },
       },
       include: {
         user: {

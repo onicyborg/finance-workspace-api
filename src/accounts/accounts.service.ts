@@ -30,13 +30,13 @@ export class AccountsService {
 
   async metaFilter(workspaceId: string) {
     const types = await this.prisma.account.findMany({
-      where : { workspaceId },
+      where : { workspaceId, deletedAt: null },
       distinct : ['type'],
       select : { type : true }
     })
 
     const currencies = await this.prisma.account.findMany({
-      where : { workspaceId },
+      where : { workspaceId, deletedAt: null },
       distinct : ['currency'],
       select : { currency : true }
     })

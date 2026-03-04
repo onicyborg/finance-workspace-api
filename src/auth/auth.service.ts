@@ -212,8 +212,8 @@ export class AuthService {
   }
 
   async resendEmailVerification(email: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
+    const user = await this.prisma.user.findFirst({
+      where: { email, deletedAt: null },
     });
 
     // Always return generic response (no info leak)
@@ -260,9 +260,11 @@ export class AuthService {
   async login(dto: LoginDto, req?: any) {
     // Determine if login by email or username
     const isEmail = dto.email_username.includes('@');
-    const where = isEmail ? { email: dto.email_username } : { username: dto.email_username };
+    const where = isEmail
+      ? { email: dto.email_username, deletedAt: null }
+      : { username: dto.email_username, deletedAt: null };
 
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where,
     });
 
@@ -323,8 +325,8 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
+    const user = await this.prisma.user.findFirst({
+      where: { email, deletedAt: null },
     });
 
     const genericResponse = {
@@ -468,8 +470,8 @@ export class AuthService {
       throw new BadRequestException('Reset token expired');
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: record.userId },
+    const user = await this.prisma.user.findFirst({
+      where: { id: record.userId, deletedAt: null },
     });
 
     if (!user) {
@@ -639,8 +641,8 @@ export class AuthService {
   }
 
   async me(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
       select: {
         id: true,
         name: true,

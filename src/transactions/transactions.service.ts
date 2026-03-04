@@ -175,12 +175,12 @@ export class TransactionsService {
     const types = ['INCOME', 'EXPENSE', 'TRANSFER'];
 
     const categories = await this.prisma.category.findMany({
-      where: { workspaceId },
+      where: { workspaceId, deletedAt: null },
       select: { id: true, name: true, type: true },
     });
 
     const accounts = await this.prisma.account.findMany({
-      where: { workspaceId },
+      where: { workspaceId, deletedAt: null },
       select: { id: true, name: true },
     });
 
