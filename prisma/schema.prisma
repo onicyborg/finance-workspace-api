@@ -83,6 +83,7 @@ model User {
   invitationsReceived WorkspaceInvitation[] @relation("Invitee")
   createdTransactions Transaction[] @relation("TransactionCreatedBy")
   updatedTransactions Transaction[] @relation("TransactionUpdatedBy")
+  uploadedAttachments TransactionAttachment[]
 
   @@map("users")
 }
@@ -220,6 +221,7 @@ model Transaction {
 
   createdBy User?  @relation("TransactionCreatedBy", fields: [createdById], references: [id])
   updatedBy User? @relation("TransactionUpdatedBy", fields: [updatedById], references: [id])
+  attachments TransactionAttachment[]
 
   @@index([workspaceId, transactionDate])
   @@index([accountId])
@@ -284,4 +286,21 @@ model WorkspaceInvitation {
   @@index([inviteeUserId])
   @@index([status])
   @@map("workspace_invitations")
+}
+
+model TransactionAttachment {
+  id             String   @id @default(uuid()) @db.Uuid
+  transactionId  String   @db.Uuid
+  key            String
+  fileName       String
+  mimeType       String
+  size           Int
+
+  uploadedById   String   @db.Uuid
+
+  createdAt      DateTime @default(now())
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  uploadedBy  User        @relation(fields: [uploadedById], references: [id])
+  @@map("transaction_attachment")
 }

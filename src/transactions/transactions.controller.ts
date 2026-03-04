@@ -6,7 +6,9 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
@@ -16,6 +18,7 @@ import { Param, Req, Body } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('workspaces/:workspaceId/transactions')
 export class TransactionsController {
@@ -91,5 +94,25 @@ export class TransactionsController {
     }
 
     return this.transactionsService.delete(workspaceId, id, userId);
+  }
+
+  @Post(':transactionId/attachments')
+  @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
+  @UseInterceptors(AnyFilesInterceptor())
+  async uploadAttachment(
+    @Param('transactionId') transactionId: string,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Req() req,
+  ) {
+    const file = files?.[0];
+    if (!file) {
+      throw new ForbiddenException('File is required');
+    }
+
+    return this.transactionsService.uploadAttachment(
+      transactionId,
+      file,
+      req.user.userId,
+    );
   }
 }

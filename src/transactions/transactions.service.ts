@@ -8,10 +8,17 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Account } from '@prisma/client';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { StorageService } from 'src/storage/storage.service';
+import sharp from 'sharp';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class TransactionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storageService: StorageService,
+  ) {}
 
   async create(workspaceId: string, dto: CreateTransactionDto, userId: string) {
     if (!userId) {
@@ -457,5 +464,35 @@ export class TransactionsService {
         data: { balance: { increment: data.amount } },
       });
     }
+  }
+
+  async uploadAttachment(
+    transactionId: string,
+    file: Express.Multer.File,
+    userId: string,
+  ) {
+    const trx = await this.prisma.transaction.findUnique({
+      where: { id: transactionId },
+    });
+
+    if (!trx) {
+      throw new NotFoundException('Transaction not found');
+    }
+
+    const uploaded = await this.storageService.uploadTransactionAttachment(
+      transactionId,
+      file,
+    );
+
+    return this.prisma.transactionAttachment.create({
+      data: {
+        transactionId,
+        key: uploaded.key,
+        fileName: file.originalname,
+        mimeType: uploaded.mimeType,
+        size: uploaded.size,
+        uploadedById: userId,
+      },
+    });
   }
 }
