@@ -11,7 +11,7 @@ import {
   ForbiddenException,
   Query,
 } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from '../workspace/guards/workspace-member.guard';
@@ -20,6 +20,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoryQueryDto } from './dto/category-query.dto';
 
 @Controller('workspaces/:workspaceId/categories')
+@ApiBearerAuth('access-token')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
