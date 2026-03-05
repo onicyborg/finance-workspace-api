@@ -59,6 +59,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Logout' })
+  @ApiBearerAuth('access-token')
   @Post('logout')
   logout(@Body() dto: LogoutDto) {
     return this.authService.logout(dto.refreshToken);

@@ -10,7 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from 'src/workspace/guards/workspace-member.guard';
@@ -21,6 +21,7 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('workspaces/:workspaceId/transactions')
+@ApiBearerAuth('access-token')
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 

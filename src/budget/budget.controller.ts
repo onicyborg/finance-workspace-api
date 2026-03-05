@@ -11,7 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from 'src/workspace/guards/workspace-member.guard';
 import { BudgetService } from './budget.service';
@@ -20,6 +20,7 @@ import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { BudgetQueryDto } from './dto/budget-query.dto';
 
 @Controller('workspaces/:workspaceId/budgets')
+@ApiBearerAuth('access-token')
 export class BudgetController {
   constructor(private readonly budgetService: BudgetService) {}
 
