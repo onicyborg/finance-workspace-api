@@ -32,18 +32,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  SwaggerModule.setup('docs', app, document, {
-    customSiteTitle: 'Finance Workspace API Docs',
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-    customCssUrl:
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css',
-    customJs: [
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.min.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.min.js',
-    ],
-  });
+  SwaggerModule.setup('docs', app, document);
 
   app.useGlobalInterceptors(new ResponseInterceptor());
 
