@@ -33,7 +33,7 @@ export class BudgetService {
       );
     }
 
-    // 🔎 2. Check duplicate — unique (workspaceId, categoryId, month, year)
+    // 🔎 2. Cek duplikat aktif
     const existing = await this.prisma.budget.findFirst({
       where: {
         workspaceId,
@@ -48,6 +48,40 @@ export class BudgetService {
       throw new BadRequestException(
         'Budget for this category and month/year already exists',
       );
+    }
+
+    // 🔄 3. Cek apakah ada soft-deleted row untuk kombinasi yang sama
+    const deleted = await this.prisma.budget.findFirst({
+      where: {
+        workspaceId,
+        categoryId: dto.categoryId,
+        month: dto.month,
+        year: dto.year,
+        deletedAt: { not: null }, // yang sudah di-delete
+      },
+    });
+
+    if (deleted) {
+      // Restore + update amount
+      const budget = await this.prisma.budget.update({
+        where: { id: deleted.id },
+        data: {
+          amount: dto.amount,
+          deletedAt: null, // restore
+        },
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              icon: true,
+              color: true,
+            },
+          },
+        },
+      });
+      return this.formatBudgetResponse(budget, null);
     }
 
     // 📝 3. Create budget
