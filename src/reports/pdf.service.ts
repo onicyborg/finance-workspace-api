@@ -7,12 +7,17 @@ export class PdfService {
   async generatePdf(html: string): Promise<Buffer> {
     const isLocal = process.env.NODE_ENV === 'development';
 
+    let executablePath: string;
+
+    if (isLocal) {
+      executablePath = process.env.PUPPETEER_EXECUTABLE_PATH ?? '';
+    } else {
+      executablePath = await chromium.executablePath();
+    }
+
     const browser = await puppeteer.launch({
       args: isLocal ? [] : chromium.args,
-      // defaultViewport: chromium.defaultViewport, ← hapus baris ini
-      executablePath: isLocal
-        ? process.env.PUPPETEER_EXECUTABLE_PATH
-        : await chromium.executablePath(),
+      executablePath,
       headless: true,
     });
 
