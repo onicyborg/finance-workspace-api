@@ -1,11 +1,12 @@
 import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from 'src/workspace/guards/workspace-member.guard';
 import { ReportsService } from './reports.service';
 import { MonthlyReportQueryDto } from './dto/monthly-report-query.dto';
 
 @Controller('workspaces/:workspaceId/reports')
+@ApiBearerAuth('access-token')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
