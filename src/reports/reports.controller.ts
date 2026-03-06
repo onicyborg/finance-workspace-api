@@ -1,20 +1,11 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import express from 'express';
+import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from 'src/workspace/guards/workspace-member.guard';
 import { ReportsService } from './reports.service';
 import { MonthlyReportQueryDto } from './dto/monthly-report-query.dto';
 
 @Controller('workspaces/:workspaceId/reports')
-@ApiBearerAuth('access-token')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
@@ -34,7 +25,7 @@ export class ReportsController {
   async exportMonthlyReportPdf(
     @Param('workspaceId') workspaceId: string,
     @Query() query: MonthlyReportQueryDto,
-    @Res() res: express.Response,
+    @Res() res: any, // ← pakai any, tidak perlu import express
   ) {
     const pdfBuffer = await this.reportsService.exportMonthlyReportPdf(
       workspaceId,
