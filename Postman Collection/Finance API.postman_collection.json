@@ -17,7 +17,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"name\": \"Defyana Khalida Zahra\",\r\n    \"username\": \"defyana\",\r\n    \"email\": \"19103079@ittelkom-pwt.ac.id\",\r\n    \"phoneNumber\": \"+6281347890521\",\r\n    \"password\": \"Qwerty123*\"\r\n}",
+              "raw": "{\r\n    \"name\": \"Akhmad Fauzi\",\r\n    \"username\": \"geats\",\r\n    \"email\": \"akhmadfauzy40@gmail.com\",\r\n    \"phoneNumber\": \"+6281347890520\",\r\n    \"password\": \"Qwerty123*\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -72,7 +72,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"token\" : \"c49be635bfd23e2a892bc3ab84779a3301682a3e9a981a5cb75716c3cc53a5e8\"\r\n}",
+              "raw": "{\r\n    \"token\" : \"2e3bb04360f6b9cdfd58ccbec7be3a57195200067eccd808150582086e7e8fe7\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -605,7 +605,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n    \"name\" : \"Stockbit\",\r\n    \"type\" : \"SAVING\", // 'CASH' | 'BANK' | 'EWALLET' | 'SAVING'\r\n    \"currency\" : \"IDR\",\r\n    \"initialBalance\" : 100000\r\n}",
+                  "raw": "{\r\n    \"name\" : \"Goals Beli Laptop\",\r\n    \"type\" : \"SAVING\", // 'CASH' | 'BANK' | 'EWALLET' | 'SAVING'\r\n    \"currency\" : \"IDR\",\r\n    \"initialBalance\" : 0\r\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -762,7 +762,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n    \"name\" : \"BCA Cuyy\",\r\n    \"isActive\" : true // true | false\r\n}",
+                  "raw": "{\r\n    \"name\" : \"Bank \",\r\n    \"isActive\" : true // true | false\r\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -873,7 +873,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/categories?page=1&limit=20&isActive=true",
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/categories?page=1&limit=20&isActive=true&type=EXPENSE",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -899,8 +899,7 @@
                     {
                       "key": "type",
                       "value": "EXPENSE",
-                      "description": "INCOME | EXPENSE",
-                      "disabled": true
+                      "description": "INCOME | EXPENSE"
                     },
                     {
                       "key": "search",
@@ -1033,7 +1032,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n    \"type\": \"EXPENSE\", // EXPENSE | INCOME | TRANSFER\r\n    \"accountId\": \"0da3dd13-9188-4e36-b45f-e1d7d6432eed\",\r\n    // \"toAccountId\" : \"6f730e1f-854f-4beb-9ac6-6ddbe5099878\", // Required if type = TRANSFER\r\n    \"amount\": 25000,\r\n    \"categoryId\" : \"061871d7-30d9-45bf-8e57-2a8edc7fecdb\", // null if type = TRANSFER\r\n    \"description\": \"Jajan\"\r\n    // \"transactionDate\": \"2026-02-27T10:00:00.000Z\" | OPTIONAL\r\n}",
+                  "raw": "{\r\n    \"type\": \"TRANSFER\", // EXPENSE | INCOME | TRANSFER\r\n    \"accountId\": \"b9422d80-67cb-47ef-8662-e536da188e7c\",\r\n    \"toAccountId\" : \"fea8f8d0-b23a-4afd-b331-8eb0d054e540\", // Required if type = TRANSFER\r\n    \"amount\": 300000,\r\n    // \"categoryId\" : \"695bec7c-35b7-41dd-a6a7-e6822db01cc7\", // null if type = TRANSFER\r\n    \"description\": \"Nabung beli laptop\"\r\n    // \"transactionDate\": \"2026-02-27T10:00:00.000Z\" | OPTIONAL\r\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1049,6 +1048,113 @@
                     "workspaces",
                     "{{workspaceId}}",
                     "transactions"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Upload Attachment Transactions",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "uuid": "d492ea5e-4d72-4d9f-b5f0-f4773b94db5a",
+                      "src": [
+                        "postman-cloud:///1f1177e3-9eed-4e70-9ca9-4b05d66322a9",
+                        "postman-cloud:///1f1177e3-99f1-40c0-a1c8-618c2736f292"
+                      ]
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/transactions/{{transactionId}}/attachments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "transactions",
+                    "{{transactionId}}",
+                    "attachments"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Download Transactions Attachments",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/transactions/attachments/{{attachmentId}}/download",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "transactions",
+                    "attachments",
+                    "{{attachmentId}}",
+                    "download"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Transaction By ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/transactions/{{transactionId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "transactions",
+                    "{{transactionId}}"
                   ]
                 }
               },
@@ -1100,7 +1206,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/transactions?page=1&limit=5",
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/transactions?page=1&limit=5&startDate=2026-03-01&endDate=2026-03-05",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1120,13 +1226,13 @@
                     },
                     {
                       "key": "search",
-                      "value": null,
+                      "value": "",
                       "type": "text",
                       "disabled": true
                     },
                     {
                       "key": "type",
-                      "value": null,
+                      "value": "",
                       "description": "INCOME | EXPENSE | TRANSFER",
                       "type": "text",
                       "disabled": true
@@ -1145,17 +1251,15 @@
                     },
                     {
                       "key": "startDate",
-                      "value": "2026-03-03",
+                      "value": "2026-03-01",
                       "description": "Format : YYYY-MM-DD",
-                      "type": "text",
-                      "disabled": true
+                      "type": "text"
                     },
                     {
                       "key": "endDate",
-                      "value": "2026-03-03",
+                      "value": "2026-03-05",
                       "description": "Format : YYYY-MM-DD",
-                      "type": "text",
-                      "disabled": true
+                      "type": "text"
                     }
                   ]
                 }
@@ -1226,6 +1330,500 @@
                     "{{workspaceId}}",
                     "transactions",
                     "{{transactionId}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Budgeting",
+          "item": [
+            {
+              "name": "Create Budgeting",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"categoryId\": \"695bec7c-35b7-41dd-a6a7-e6822db01cc7\",\r\n  \"month\": 3,\r\n  \"year\": 2026,\r\n  \"amount\": 100000\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/budgets",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "budgets"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Budgeting",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/budgets?page=1&limit=10",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "budgets"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "month",
+                      "value": "3",
+                      "disabled": true
+                    },
+                    {
+                      "key": "year",
+                      "value": "2026",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Detail Budgeting",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/budgets/{{budgetId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "budgets",
+                    "{{budgetId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Budgeting",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"categoryId\": \"695bec7c-35b7-41dd-a6a7-e6822db01cc7\",\r\n  \"month\": 3,\r\n  \"year\": 2026,\r\n  \"amount\": 100000\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/budgets/{{budgetId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "budgets",
+                    "{{budgetId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Budgeting",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/budgets/{{budgetId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "budgets",
+                    "{{budgetId}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Reports",
+          "item": [
+            {
+              "name": "Monthly Reports Json",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/reports/monthly?month=3&year=2026",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "reports",
+                    "monthly"
+                  ],
+                  "query": [
+                    {
+                      "key": "month",
+                      "value": "3"
+                    },
+                    {
+                      "key": "year",
+                      "value": "2026"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Monthly Reports PDF",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/reports/monthly/export-pdf?month=3&year=2026",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "reports",
+                    "monthly",
+                    "export-pdf"
+                  ],
+                  "query": [
+                    {
+                      "key": "month",
+                      "value": "3"
+                    },
+                    {
+                      "key": "year",
+                      "value": "2026"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Saving Goals",
+          "item": [
+            {
+              "name": "Create Saving Goals",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"Beli Laptop Keren\",\r\n  \"accountId\": \"fea8f8d0-b23a-4afd-b331-8eb0d054e540\",\r\n  \"targetAmount\": 25000000,\r\n  \"deadline\": \"2026-05-20\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/saving-goals",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "saving-goals"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Saving Goals",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/saving-goals",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "saving-goals"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Saving Goals By ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/saving-goals/{{savingGoalsId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "saving-goals",
+                    "{{savingGoalsId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Contributions Saving Goals",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/saving-goals/{{savingGoalsId}}/contributions?page=1&limit=10",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "saving-goals",
+                    "{{savingGoalsId}}",
+                    "contributions"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Saving Goals",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"Beli Laptop Keren\",\r\n  \"accountId\": \"fea8f8d0-b23a-4afd-b331-8eb0d054e540\",\r\n  \"targetAmount\": 25000000,\r\n  \"deadline\": \"2026-05-20\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/saving-goals/{{savingGoalsId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "saving-goals",
+                    "{{savingGoalsId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Saving Goals",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/saving-goals/{{savingGoalsId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "saving-goals",
+                    "{{savingGoalsId}}"
                   ]
                 }
               },
@@ -1312,13 +1910,50 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/workspaces/dbbfc188-1758-496c-8858-a6367e88ef27",
+              "raw": "{{base_url}}/workspaces/{{workspaceId}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "workspaces",
-                "dbbfc188-1758-496c-8858-a6367e88ef27"
+                "{{workspaceId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Workspace",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\" : \"My Personal Finance\",\r\n    \"description\" : \"Tracking daily expenses\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/workspaces/{{workspaceId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceId}}"
               ]
             }
           },
