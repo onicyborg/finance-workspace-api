@@ -10,12 +10,14 @@ import { Account } from '@prisma/client';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { StorageService } from '../storage/storage.service';
+import { SavingGoalsService } from '../saving-goals/saving-goals.service';
 
 @Injectable()
 export class TransactionsService {
   constructor(
     private prisma: PrismaService,
     private storageService: StorageService,
+    private savingGoalsService: SavingGoalsService, // ← inject SavingGoalsService
   ) {}
 
   async create(workspaceId: string, dto: CreateTransactionDto, userId: string) {
@@ -70,7 +72,6 @@ export class TransactionsService {
       }
 
       // 💰 2. Balance Validation
-
       if (dto.type === 'EXPENSE' || dto.type === 'TRANSFER') {
         if (Number(fromAccount.balance) < dto.amount) {
           throw new BadRequestException('Insufficient balance');
@@ -109,50 +110,34 @@ export class TransactionsService {
       }
 
       // 🔄 3. Apply Balance Mutation
-
       if (dto.type === 'INCOME') {
         await tx.account.update({
           where: { id: fromAccount.id },
-          data: {
-            balance: {
-              increment: dto.amount,
-            },
-          },
+          data: { balance: { increment: dto.amount } },
         });
       }
 
       if (dto.type === 'EXPENSE') {
         await tx.account.update({
           where: { id: fromAccount.id },
-          data: {
-            balance: {
-              decrement: dto.amount,
-            },
-          },
+          data: { balance: { decrement: dto.amount } },
         });
       }
 
       if (dto.type === 'TRANSFER') {
         await tx.account.update({
           where: { id: fromAccount.id },
-          data: {
-            balance: {
-              decrement: dto.amount,
-            },
-          },
+          data: { balance: { decrement: dto.amount } },
         });
 
         await tx.account.update({
           where: { id: toAccount?.id },
-          data: {
-            balance: { increment: dto.amount },
-          },
+          data: { balance: { increment: dto.amount } },
         });
       }
 
       // 📝 4. Create Transaction Record
-
-      return tx.transaction.create({
+      const transaction = await tx.transaction.create({
         data: {
           workspaceId,
           type: dto.type,
@@ -168,6 +153,22 @@ export class TransactionsService {
           updatedById: userId,
         },
       });
+
+      // 🎯 5. Sync saving goals untuk account yang terdampak
+      await this.savingGoalsService.syncGoalsByAccount(
+        tx,
+        workspaceId,
+        dto.accountId,
+      );
+      if (dto.type === 'TRANSFER' && dto.toAccountId) {
+        await this.savingGoalsService.syncGoalsByAccount(
+          tx,
+          workspaceId,
+          dto.toAccountId,
+        );
+      }
+
+      return transaction;
     });
   }
 
@@ -197,17 +198,14 @@ export class TransactionsService {
       deletedAt: null,
     };
 
-    // 🔎 Filter: type
     if (query.type) {
       where.type = query.type;
     }
 
-    // 🔎 Filter: category
     if (query.categoryId) {
       where.categoryId = query.categoryId;
     }
 
-    // 🔎 Filter: account (include transfer both sides)
     if (query.accountId) {
       where.OR = [
         { accountId: query.accountId },
@@ -215,26 +213,21 @@ export class TransactionsService {
       ];
     }
 
-    // 🔎 Filter: date range
-
     if (query.startDate || query.endDate) {
       where.transactionDate = {};
 
       if (query.startDate) {
-        // Set start date to beginning of day (00:00:00)
         const startDate = new Date(query.startDate);
         startDate.setHours(0, 0, 0, 0);
         where.transactionDate.gte = startDate;
       }
 
       if (query.endDate) {
-        // Set end date to end of day (23:59:59.999)
         const endDate = new Date(query.endDate);
         endDate.setHours(23, 59, 59, 999);
         where.transactionDate.lte = endDate;
       }
     } else {
-      // Default: show transactions from today only
       const today = new Date();
       const startOfDay = new Date(today);
       startOfDay.setHours(0, 0, 0, 0);
@@ -256,9 +249,7 @@ export class TransactionsService {
           toAccount: true,
           category: true,
         },
-        orderBy: {
-          transactionDate: 'desc',
-        },
+        orderBy: { transactionDate: 'desc' },
         skip,
         take: limit,
       }),
@@ -374,7 +365,6 @@ export class TransactionsService {
       }
 
       // 🔁 1️⃣ Reverse Old Mutation
-
       await this.reverseMutation(tx, existing);
 
       // 🔄 2️⃣ Merge new data
@@ -397,13 +387,32 @@ export class TransactionsService {
       await this.validateAndApplyMutation(tx, workspaceId, newData);
 
       // 📝 4️⃣ Update record
-      return tx.transaction.update({
+      const updated = await tx.transaction.update({
         where: { id },
         data: {
           ...newData,
           updatedById: userId,
         },
       });
+
+      // 🎯 5️⃣ Sync saving goals untuk semua account yang terdampak
+      // (account lama + account baru, termasuk toAccount keduanya)
+      const affectedAccounts = new Set<string>([
+        existing.accountId,
+        newData.accountId,
+        ...(existing.toAccountId ? [existing.toAccountId] : []),
+        ...(newData.toAccountId ? [newData.toAccountId] : []),
+      ]);
+
+      for (const accountId of affectedAccounts) {
+        await this.savingGoalsService.syncGoalsByAccount(
+          tx,
+          workspaceId,
+          accountId,
+        );
+      }
+
+      return updated;
     });
   }
 
@@ -413,11 +422,7 @@ export class TransactionsService {
     }
     return this.prisma.$transaction(async (tx) => {
       const existing = await tx.transaction.findFirst({
-        where: {
-          id,
-          workspaceId,
-          deletedAt: null,
-        },
+        where: { id, workspaceId, deletedAt: null },
       });
 
       if (!existing) {
@@ -426,7 +431,6 @@ export class TransactionsService {
 
       // ⏳ 5 minute rule
       const diff = Date.now() - existing.createdAt.getTime();
-
       if (diff > 5 * 60 * 1000) {
         throw new BadRequestException(
           'Transaction can only be deleted within 5 minutes of creation',
@@ -437,13 +441,29 @@ export class TransactionsService {
       await this.reverseMutation(tx, existing);
 
       // 🗑 Soft delete
-      return tx.transaction.update({
+      const deleted = await tx.transaction.update({
         where: { id },
         data: {
           deletedAt: new Date(),
           updatedById: userId,
         },
       });
+
+      // 🎯 Sync saving goals untuk account yang terdampak
+      await this.savingGoalsService.syncGoalsByAccount(
+        tx,
+        workspaceId,
+        existing.accountId,
+      );
+      if (existing.toAccountId) {
+        await this.savingGoalsService.syncGoalsByAccount(
+          tx,
+          workspaceId,
+          existing.toAccountId,
+        );
+      }
+
+      return deleted;
     });
   }
 
@@ -606,16 +626,13 @@ export class TransactionsService {
   async getAttachmentDownloadUrl(attachmentId: string, userId: string) {
     const attachment = await this.prisma.transactionAttachment.findUnique({
       where: { id: attachmentId },
-      include: {
-        transaction: true,
-      },
+      include: { transaction: true },
     });
 
     if (!attachment) {
       throw new NotFoundException('Attachment not found');
     }
 
-    // 🔒 cek apakah user member workspace
     const member = await this.prisma.workspaceMember.findUnique({
       where: {
         workspaceId_userId: {
@@ -631,8 +648,6 @@ export class TransactionsService {
 
     const url = await this.storageService.generateDownloadUrl(attachment.key);
 
-    return {
-      downloadUrl: url,
-    };
+    return { downloadUrl: url };
   }
 }
