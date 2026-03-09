@@ -1,9 +1,10 @@
-import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Res, UseGuards, Post, Body } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from 'src/workspace/guards/workspace-member.guard';
 import { ReportsService } from './reports.service';
 import { MonthlyReportQueryDto } from './dto/monthly-report-query.dto';
+import { CustomReportDto } from './dto/custom-report.dto';
 
 @Controller('workspaces/:workspaceId/reports')
 @ApiBearerAuth('access-token')
@@ -42,6 +43,40 @@ export class ReportsController {
       'Content-Length': pdfBuffer.length,
     });
 
+    res.end(pdfBuffer);
+  }
+
+  // ── CUSTOM ───────────────────────────────────
+
+  @ApiOperation({ summary: 'Get custom financial report (JSON)' })
+  @Post('custom')
+  @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
+  getCustomReport(
+    @Param('workspaceId') workspaceId: string,
+    @Body() dto: CustomReportDto,
+  ) {
+    return this.reportsService.getCustomReport(workspaceId, dto);
+  }
+
+  @ApiOperation({ summary: 'Export custom financial report as PDF' })
+  @Post('custom/export-pdf')
+  @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
+  async exportCustomReportPdf(
+    @Param('workspaceId') workspaceId: string,
+    @Body() dto: CustomReportDto,
+    @Res() res: any,
+  ) {
+    const pdfBuffer = await this.reportsService.exportCustomReportPdf(
+      workspaceId,
+      dto,
+    );
+    const filename = `custom-report-${dto.from}-to-${dto.to}.pdf`;
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': pdfBuffer.length,
+    });
     res.end(pdfBuffer);
   }
 }
