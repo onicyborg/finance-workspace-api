@@ -1611,6 +1611,115 @@
                 }
               },
               "response": []
+            },
+            {
+              "name": "Get meta options for custom report filter",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/reports/meta",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "reports",
+                    "meta"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Custom Reports",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"from\": \"2026-01-01\",\r\n  \"to\": \"2026-03-31\",\r\n  \"types\": [\"EXPENSE\"],\r\n  \"groupBy\": \"category\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/reports/custom",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "reports",
+                    "custom"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Custom Reports PDF",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"from\": \"2026-01-01\",\r\n  \"to\": \"2026-03-31\"\r\n//   \"accountIds\": [\"uuid-account-1\", \"uuid-account-2\"],\r\n//   \"categoryIds\": [\"uuid-category-1\", \"uuid-category-2\"],\r\n//   \"types\": [\"EXPENSE\"], // 'INCOME' | 'EXPENSE' | 'TRANSFER'\r\n//   \"groupBy\": \"category\" // 'day' | 'week' | 'month' | 'category' | 'account'\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/workspaces/{{workspaceId}}/reports/custom/export-pdf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "workspaces",
+                    "{{workspaceId}}",
+                    "reports",
+                    "custom",
+                    "export-pdf"
+                  ]
+                }
+              },
+              "response": []
             }
           ]
         },
@@ -1749,11 +1858,6 @@
                     {
                       "key": "limit",
                       "value": "10"
-                    },
-                    {
-                      "key": "search",
-                      "value": "",
-                      "disabled": true
                     }
                   ]
                 }

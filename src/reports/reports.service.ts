@@ -7,7 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MonthlyReportQueryDto } from './dto/monthly-report-query.dto';
 import { PdfService } from './pdf.service';
 import { generateMonthlyReportHtml } from './reports-template';
-import { CustomReportDto, GroupBy } from './dto/custom-report.dto'; // ← tambah
+import { CustomReportDto, GroupBy, TransactionType } from './dto/custom-report.dto'; // ← tambah
 import { generateCustomReportHtml } from './custom-reports-template';
 
 @Injectable()
@@ -149,6 +149,34 @@ export class ReportsService {
     const report = await this.getCustomReport(workspaceId, dto);
     const html = generateCustomReportHtml(report);
     return this.pdfService.generatePdf(html);
+  }
+
+  async getReportMeta(workspaceId: string) {
+    const [accounts, categories] = await Promise.all([
+      this.prisma.account.findMany({
+        where: { workspaceId, deletedAt: null, isActive: true },
+        select: { id: true, name: true, type: true, currency: true },
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.category.findMany({
+        where: { workspaceId, deletedAt: null, isActive: true },
+        select: { id: true, name: true, type: true, icon: true, color: true },
+        orderBy: { name: 'asc' },
+      }),
+    ]);
+
+    return {
+      accounts,
+      categories,
+      types: ['INCOME', 'EXPENSE', 'TRANSFER'] as TransactionType[],
+      groupByOptions: [
+        { value: 'day', label: 'Harian' },
+        { value: 'week', label: 'Mingguan' },
+        { value: 'month', label: 'Bulanan' },
+        { value: 'category', label: 'Kategori' },
+        { value: 'account', label: 'Akun' },
+      ] as { value: GroupBy; label: string }[],
+    };
   }
 
   // ──────────────────────────────────────────────

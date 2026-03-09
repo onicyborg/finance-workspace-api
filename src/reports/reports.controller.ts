@@ -1,4 +1,13 @@
-import { Controller, Get, Param, Query, Res, UseGuards, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  Res,
+  UseGuards,
+  Post,
+  Body,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { WorkspaceMemberGuard } from 'src/workspace/guards/workspace-member.guard';
@@ -47,6 +56,13 @@ export class ReportsController {
   }
 
   // ── CUSTOM ───────────────────────────────────
+
+  @ApiOperation({ summary: 'Get meta options for custom report filter' })
+  @Get('meta')
+  @UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
+  getReportMeta(@Param('workspaceId') workspaceId: string) {
+    return this.reportsService.getReportMeta(workspaceId);
+  }
 
   @ApiOperation({ summary: 'Get custom financial report (JSON)' })
   @Post('custom')
