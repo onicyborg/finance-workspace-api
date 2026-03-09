@@ -19,7 +19,7 @@ import { AccountsService } from './accounts.service';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
 
-@ApiTags('Workspaces')
+@ApiTags('Accounts')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller('workspaces/:workspaceId/accounts')
